@@ -20,7 +20,7 @@ if __name__ == '__main__':
     #order = var1.build()
 
     invoker = Invoker()
-    order = invoker.execute_command(CommandComposeOrder(var1)) #y u get notin done u piece of shiet
+    order = invoker.execute_command(CommandComposeOrder(var1))
     print(order)
 
     #CommandRevertOrder.execute(order)

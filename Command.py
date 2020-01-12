@@ -21,8 +21,8 @@ class CommandComposeOrder(Command):
 
     def execute(self):
         print("Executing...")
-        self.__order.build()
-
+        var = self.__order.build()
+        return var
 
 class CommandRevertOrder(Command):
     """docstring for CommandRevertOrder"""
@@ -55,4 +55,4 @@ class Invoker:
 
     def execute_command(self, command: Command):
         print("Executing...")
-        command.execute()
+        return command.execute()
