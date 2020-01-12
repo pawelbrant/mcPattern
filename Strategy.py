@@ -12,7 +12,7 @@ class Strategy(ABC):
         pass
 
 class StrategyRegularPrice(Strategy):
-    """docstring for RegulaPrice."""
+    """docstring for StrategyRegulaPrice."""
 
     def __init__(self):
         super(StrategyRegularPrice, self).__init__()
