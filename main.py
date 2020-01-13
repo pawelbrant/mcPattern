@@ -21,7 +21,10 @@ if __name__ == '__main__':
 
     invoker = Invoker()
     order = invoker.execute_command(CommandComposeOrder(var1))
+    order2 = invoker.execute_command(CommandRevertOrder(var1))
+
     print(order)
+    print(order2)
 
     #CommandRevertOrder.execute(order)
     #print(order)

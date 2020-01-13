@@ -27,11 +27,12 @@ class CommandComposeOrder(Command):
 class CommandRevertOrder(Command):
     """docstring for CommandRevertOrder"""
 
-    def __init__(self):
+    def __init__(self, order: Order):
         super(CommandRevertOrder, self).__init__()
+        self.__order = order
 
-    def execute(self, order):
-        order._product_list = []
+    def execute(self):
+        self.__order._product_list = []
 
 
 class CommandChangeState(Command):
