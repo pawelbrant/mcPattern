@@ -5,6 +5,7 @@ import sys
 # from gui import ControlPanel
 from Model import Product, OrderRegular, OrderTakeaway, OrderBuilderRegular, OrderBuilderTakeaway
 from Command import CommandRevertOrder, CommandComposeOrder, Invoker
+from Decorator import KetchupDecorator
 
 
 if __name__ == '__main__':
@@ -17,6 +18,7 @@ if __name__ == '__main__':
 
     var1.add_product(Product('Mc Mini', 14.99))
     var1.add_product(Product('Mc Big', 20.99))
+    var1.add_product(KetchupDecorator(Product('Fries', 5.15)))
     #order = var1.build()
 
     invoker = Invoker()
