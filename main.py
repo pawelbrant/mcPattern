@@ -18,7 +18,8 @@ if __name__ == '__main__':
 
     var1.add_product(Product('Mc Mini', 14.99))
     var1.add_product(Product('Mc Big', 20.99))
-    var1.add_product(KetchupDecorator(Product('Fries', 5.15)))
+    p1 = Product('Fries', 5.15)
+    var1.add_product(KetchupDecorator(p1)) #.get_decorated()) #dodaje kinda poprawnie cenę, ale jebie się przy nazwie
     #order = var1.build()
 
     invoker = Invoker()

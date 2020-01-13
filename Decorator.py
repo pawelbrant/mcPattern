@@ -1,56 +1,72 @@
 from abc import ABC, abstractmethod
 from Model import Product
 
-class Decorator(Product):
 
-    #def __init__(self, decorated: Product):
-        #self.__decorated = decorated
+class Decorator(object):
 
-    @abstractmethod
-    def getName(self):
+    def __init__(self, decorated: Product):
+        self.__decorated = decorated
+
+    #@abstractmethod
+    def get_name(self):
+        return self.__decorated.get_name()
+
+    #@abstractmethod
+    def get_price(self):
+        return self.__decorated.get_price()
+
+    #@abstractmethod
+    def get_decorated(self):
         pass
 
-    @abstractmethod
-    def getPrice(self):
-        pass
-
-    @abstractmethod
-    def getDecorated(self):
-        pass
 
 class KetchupDecorator(Decorator):
 
     def __init__(self, product: Product):
-        super(KetchupDecorator, self).__init__()
+        super(KetchupDecorator, self).__init__(product)
+        #Decorator.__init__(self, product)
         self.__product = product
 
-    def getName(self):
+    def get_name(self):
+        print("name")
         #self.__name + "with ketchup"
-        return self.__product.__name + "with ketchup"
+        #return Decorator.get_name(self) + " with ketchup "
+        #print(super(KetchupDecorator, self).get_name())
+        return super(KetchupDecorator, self).get_name() + " with ketchup "
 
-    def getPrice(self):
-        return self.__product.__price + 2.00
+    def get_price(self):
+        #return Decorator.get_price(self) + 2.00
+        return super(KetchupDecorator, self).get_price() + 2.00
+
+    def get_decorated(self):
+        #print(self.__product.__name)
+        self.__product.__name = self.get_name()
+        print(self.__product.__name)
+        self.__product.__price = self.get_price()
+        #print(self.__product.__str__())
+        print(self.__product.__name)
+        return self.__product
+
 
 class BoxDecorator(Decorator):
 
     def __init__(self, product: Product):
-        super(BoxDecorator, self).__init__()
-        self.__product = product
+        Decorator.__init__(self, product)
 
-    def getName(self):
-        return self.__product.__name + "with box"
+    def get_name(self):
+        return Decorator.get_name(self) + " with box "
 
-    def getPrice(self):
-        return self.__product.__price + 0.50
+    def get_price(self):
+        return Decorator.get_price(self) + 0.50
+
 
 class EnlargeDecorator(Decorator):
 
     def __init__(self, product: Product):
-        super(EnlargeDecorator, self).__init__()
-        self.__product = product
+        Decorator.__init__(self, product)
 
     def getName(self):
-        return self.__product.__name + "enlarged"
+        return Decorator.get_name(self) + " enlarged "
 
     def getPrice(self):
-        return self.__product.__price + 3.00
+        return Decorator.get_price(self) + 3.00

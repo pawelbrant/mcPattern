@@ -20,7 +20,7 @@ class CommandComposeOrder(Command):
         #print(self.__order)
 
     def execute(self):
-        print("Executing...")
+        #print("Executing...")
         var = self.__order.build()
         return var
 
@@ -55,5 +55,5 @@ class Invoker:
     #     self._commands.append(command)
 
     def execute_command(self, command: Command):
-        print("Executing...")
+        #print("Executing...")
         return command.execute()

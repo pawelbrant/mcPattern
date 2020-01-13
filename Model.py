@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from Strategy import StrategyRegularPrice, StrategySmallPromotion, StrategyBigPromotion
 
+
 class Product(object):
     """docstring for Product."""
 
@@ -73,7 +74,7 @@ class OrderBuilder(ABC):
         pass
 
     def build(self):
-        print("hehe")
+        #print("hehe")
         return OrderRegular(self._product_list, self._get_strategy())
 
     def _get_strategy(self):
