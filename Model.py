@@ -24,7 +24,7 @@ class Product(object):
 class Order(ABC):
     """docstring for Order."""
 
-    __number = 0
+    __number = 1
 
     @abstractmethod
     def __init__(self, product_list, strategy):

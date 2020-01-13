@@ -15,9 +15,9 @@ class Decorator(object):
     def get_price(self):
         return self.__decorated.get_price()
 
-    #@abstractmethod
-    def get_decorated(self):
-        pass
+    # #@abstractmethod
+    # def get_decorated(self):
+    #     pass
 
 
 class KetchupDecorator(Decorator):
@@ -26,6 +26,12 @@ class KetchupDecorator(Decorator):
         super(KetchupDecorator, self).__init__(product)
         #Decorator.__init__(self, product)
         self.__product = product
+        # self.__product.__name = self.get_name()
+        # print(self.__product.__name)
+        # self.__product.__price = self.get_price()
+        # print(self.__product.__price)
+        # print(self.__product)
+        self.__product = self.get_decorated()
 
     def get_name(self):
         print("name")
@@ -35,6 +41,7 @@ class KetchupDecorator(Decorator):
         return super(KetchupDecorator, self).get_name() + " with ketchup "
 
     def get_price(self):
+        print("price")
         #return Decorator.get_price(self) + 2.00
         return super(KetchupDecorator, self).get_price() + 2.00
 
@@ -44,7 +51,7 @@ class KetchupDecorator(Decorator):
         print(self.__product.__name)
         self.__product.__price = self.get_price()
         #print(self.__product.__str__())
-        print(self.__product.__name)
+        print(self.__product.__price)
         return self.__product
 
 
@@ -65,8 +72,8 @@ class EnlargeDecorator(Decorator):
     def __init__(self, product: Product):
         Decorator.__init__(self, product)
 
-    def getName(self):
+    def get_name(self):
         return Decorator.get_name(self) + " enlarged "
 
-    def getPrice(self):
+    def get_price(self):
         return Decorator.get_price(self) + 3.00

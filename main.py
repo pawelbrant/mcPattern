@@ -21,7 +21,8 @@ if __name__ == '__main__':
     p1 = Product('Fries', 5.15)
     var1.add_product(KetchupDecorator(p1)) #.get_decorated()) #dodaje kinda poprawnie cenę, ale jebie się przy nazwie
     #order = var1.build()
-
+    #print(var1._product_list.__getitem__(1))
+    #print(var1._product_list.__getitem__(2))
     invoker = Invoker()
     order = invoker.execute_command(CommandComposeOrder(var1))
     order2 = invoker.execute_command(CommandRevertOrder(var1))
