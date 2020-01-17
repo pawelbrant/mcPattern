@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
 
-class Strategy(ABC):
-    """docstring for Strategy."""
+class IStrategy(ABC):
+    """docstring for IStrategy."""
 
     @abstractmethod
     def __init__(self):
-        super(Strategy, self).__init__()
+        super(IStrategy, self).__init__()
 
     @abstractmethod
     def calculate(self, product_list):
         pass
 
-class StrategyRegularPrice(Strategy):
+class StrategyRegularPrice(IStrategy):
     """docstring for StrategyRegulaPrice."""
 
     def __init__(self):
@@ -21,6 +21,7 @@ class StrategyRegularPrice(Strategy):
         total = 0
         for product in product_list:
             total += product.get_price()
+        total = round(total, 2)
         return total
 
 class StrategySmallPromotion(object):
@@ -39,6 +40,7 @@ class StrategySmallPromotion(object):
             total += price
         total = total - cheapest_price
         total = total * 0.9
+        total = round(total, 2)
         return total
 
 
@@ -58,4 +60,5 @@ class StrategyBigPromotion(object):
             total += price
         total = total - most_expensive_price
         total = total * 0.85
+        total = round(total, 2)
         return total

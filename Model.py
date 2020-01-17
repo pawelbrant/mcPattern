@@ -2,17 +2,29 @@ from abc import ABC, abstractmethod
 
 from Strategy import StrategyRegularPrice, StrategySmallPromotion, StrategyBigPromotion
 
+class IProduct(ABC):
+    """docstring for IProduct."""
 
-class Product(object):
+    @abstractmethod
+    def __init__(self):
+        super(IProduct, self).__init__()
+
+    @abstractmethod
+    def get_price(self):
+        pass
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+
+class Product(IProduct):
     """docstring for Product."""
 
     def __init__(self, name, price):
         super(Product, self).__init__()
         self.__name = name
         self.__price = price
-
-    def get_name(self):
-        return self.__name
 
     def get_price(self):
         return self.__price
@@ -74,7 +86,6 @@ class OrderBuilder(ABC):
         pass
 
     def build(self):
-        #print("hehe")
         return OrderRegular(self._product_list, self._get_strategy())
 
     def _get_strategy(self):
