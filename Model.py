@@ -1,3 +1,4 @@
+import jsonpickle
 from abc import ABC, abstractmethod
 
 from Strategy import StrategyRegularPrice, StrategySmallPromotion, StrategyBigPromotion
@@ -36,29 +37,32 @@ class Product(IProduct):
 class Order(ABC):
     """docstring for Order."""
 
-    __number = 1
-
     @abstractmethod
     def __init__(self, product_list, strategy):
         super(Order, self).__init__()
         self._product_list = product_list
-        self._id = Order._Order__number
-        Order._Order__number = (Order._Order__number + 1) % 100
+        self._id = Storage().get_number()
         self._price_total = 0
         # self._state = StatePending()
         self._strategy = strategy
 
     def __str__(self):
-        string = 'Zamównienie nr {:>2}: '.format(self._id)
+        string = 'Order #{:0>2}: '.format(self._id)
         for product in self._product_list:
             string += ' {}'.format(product)
         if self._price_total == 0:
             self._price_total = self._strategy.calculate(self._product_list)
-        string += '; Cena wynosi: {}'.format(self._price_total)
+        string += '; Total price: {}'.format(self._price_total)
         return string
+
+    def get_number(self):
+        return self._id
 
     def get_product_list(self):
         return self._product_list
+
+    def get_total(self):
+        return self._price_total
 
 class OrderRegular(Order):
     """docstring for OrderRegular."""
@@ -117,3 +121,116 @@ class OrderBuilderTakeaway(OrderBuilder):
     def add_product(self, product):
         self._product_list.append(product)
         return self
+
+class Observer(ABC):
+
+    @abstractmethod
+    def __init__(self):
+        super(Observer, self).__init__()
+        self._storage = Storage()
+        self._storage.add_observer(self)
+        self._order_list = self._storage.get_orders()
+    
+    def invalidate(self):
+        self._order_list = self._storage.get_orders()
+
+class Observable(ABC):
+
+    @abstractmethod
+    def __init__(self):
+        super(Observable, self).__init__()
+        self._observer_list = []
+
+    def add_observer(self, observer: Observer):
+        if observer in self._observer_list:
+            return
+        self._observer_list.append(observer)
+
+    def remove_observer(self, observer: Observer):
+        if observer in self._observer_list:
+            self._observer_list.remove(observer)
+
+    def notify(self, observer: Observer):
+        if observer in self._observer_list:
+            observer.invalidate()
+    
+    def notify_all(self):
+        [x.invalidate() for x in self._observer_list]
+
+class Storage(object):
+    
+    class __Storage(Observable):
+
+        def __init__(self):
+            super(Storage.__Storage, self).__init__()
+            try:
+                with open('backup.json', 'r') as f:
+                    data = jsonpickle.decode(f.read())
+                print(data)
+                (self.__current_number, self.__menu, self.__order_list) = data
+            except:
+                print('Could not load data')
+                self.__current_number = 1
+                self.__menu = []
+                self.__order_list = []
+
+        def get_number(self):
+            return self.__current_number
+
+        def add_to_menu(self, product: Product):
+            if product in self.__menu:
+                return
+            self.__menu.append(product)
+            self.notify_all()
+
+        def remove_from_menu(self, product: Product):
+            if product in self.__menu:
+                self.__menu.remove(product)
+                self.notify_all()
+
+        def add_order(self, order: Order):
+            self.__order_list.append(order)
+            self.__current_number = (order.get_number() % 10) + 1
+            self.notify_all()
+            self.serialize()
+
+        def order_received(self, order: Order):
+            self.notify_all()
+
+        def cancel_order(self, order: Order):
+            if order in self.__order_list:
+                self.__order_list.remove(order)
+                self.notify_all()
+
+        def get_menu(self):
+            return self.__menu
+
+        def get_orders(self):
+            return self.__order_list
+
+        def serialize(self):
+            data = (self.__current_number, self.__menu, self.__order_list)
+            try:
+                with open('backup.json', 'w') as f:
+                    f.write(jsonpickle.encode(data))
+            except:
+                print('Could not backup data')
+
+    __instance = None
+
+    def __init__(self):
+        if not Storage.__instance:
+            Storage.__instance = Storage.__Storage()
+
+    def __getattribute__(self, attr):
+        return getattr(Storage.__instance, attr)
+
+class StaffObserver(Observer):
+    
+    def __init__(self):
+        super(StaffObserver, self).__init__()
+
+class RegisterObserver(Observer):
+    
+    def __init__(self):
+        super(RegisterObserver, self).__init__()
