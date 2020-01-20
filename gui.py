@@ -1,7 +1,7 @@
 #GUI imports
 from PyQt5.QtWidgets import QWidget, QListWidget, QFormLayout, QHBoxLayout, \
 QLabel, QSpinBox, QDoubleSpinBox, QLineEdit, QTextEdit, QPushButton, \
-QVBoxLayout, QListWidgetItem, QSpacerItem, QCheckBox, QStackedLayout
+QVBoxLayout, QListWidgetItem, QSpacerItem, QCheckBox, QStackedLayout, QGridLayout
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtCore import Qt
 
@@ -111,7 +111,7 @@ class StaffMonitor(QWidget, Observer, metaclass=M_GUI_Model):
         self.__orders.clear()
         for item in self._order_list:
             row = QListWidgetItem()
-            row.setText('#{:0>2}'.format(item.get_number()))
+            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
             self.__orders.addItem(row)
 
     def details(self):
@@ -152,7 +152,7 @@ class RegisterMonitor(QWidget, Observer, metaclass=M_GUI_Model):
         self.__orders.clear()
         for item in self._order_list:
             row = QListWidgetItem()
-            row.setText('#{:0>2}'.format(item.get_number()))
+            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
             row.setFlags(row.flags() & ~Qt.ItemIsSelectable)
             self.__orders.addItem(row)
 
@@ -334,9 +334,8 @@ class ChangeOrderState(QWidget, Command, metaclass=M_GUI_Model):
     def __init__(self, parent=None):
         super(ChangeOrderState, self).__init__(parent)
 
-        self.__name = QLineEdit()
-        self.__price = QLineEdit()
-        self.__add_button = QPushButton()
+        self.__next_state_button = QPushButton()
+        self.__previous_state_button = QPushButton()
         self.__exit_button = QPushButton()
         self.__list_widget = QListWidget()
 
@@ -346,54 +345,48 @@ class ChangeOrderState(QWidget, Command, metaclass=M_GUI_Model):
     def start(self):
         self.setWindowTitle("Change order's state")
 
-        self.__add_button.setText('Add')
-        self.__add_button.clicked.connect(self.add)
-        self.__add_button.setMinimumWidth(100)
+        self.__next_state_button.setText('Next state')
+        self.__next_state_button.clicked.connect(self.next)
+        self.__next_state_button.setMinimumWidth(100)
+        self.__previous_state_button.setText('Previous state')
+        self.__previous_state_button.clicked.connect(self.previous)
+        self.__previous_state_button.setMinimumWidth(100)
         self.__exit_button.setText('Close')
         self.__exit_button.clicked.connect(self.close)
         self.__exit_button.setMinimumWidth(100)
 
-        buttons = QHBoxLayout()
-        buttons.addWidget(self.__add_button)
-        buttons.addItem(QSpacerItem(10, 0))
-        buttons.addWidget(self.__exit_button)
+        buttons = QGridLayout()
+        buttons.setSpacing(5)
+        buttons.addWidget(self.__previous_state_button, 0, 0)
+        buttons.addWidget(self.__next_state_button, 0, 1)
+        buttons.addWidget(self.__exit_button, 1, 0, 1, 2)
 
-        text_fields = QFormLayout()
-        text_fields.addItem(QSpacerItem(0, 30))
-        text_fields.addRow('Name: ', self.__name)
-        text_fields.addItem(QSpacerItem(0, 30))
-        text_fields.addRow('Price: ', self.__price)
-
-        left_column = QVBoxLayout()
-        left_column.addItem(text_fields)
-        left_column.addItem(buttons)
-
-        right_column = QVBoxLayout()
-        right_column.addWidget(QLabel('Current menu:'))
-        right_column.addItem(QSpacerItem(0, 5))
-        right_column.addWidget(self.__list_widget)
-
-        layout = QHBoxLayout()
-        layout.addItem(left_column)
-        layout.addSpacing(30)
-        layout.addItem(right_column)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel('Orders:'))
+        layout.addWidget(self.__list_widget)
+        layout.addItem(buttons)
 
         self.setLayout(layout)
 
     def reload(self):
         self.__list_widget.clear()
-        for item in self._storage.get_menu():
+        for item in self._storage.get_orders():
             row = QListWidgetItem()
-            row.setText('{0:20}{1:5}'.format(str(item), item.get_price()))
+            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
             self.__list_widget.addItem(row)
 
-    def add(self):
-        name = self.__name.text()
-        price = self.__price.text()
-        # validation
-        self.__name.setText('')
-        self.__price.setText('')
-        self._storage.add_to_menu(Product(name, price))
+    def next(self):
+        number = self.__list_widget.currentRow()
+        if number == -1:
+            return
+        self._storage.next_state(self._storage.get_orders()[number])
+        self.reload()
+
+    def previous(self):
+        number = self.__list_widget.currentRow()
+        if number == -1:
+            return
+        self._storage.previous_state(self._storage.get_orders()[number])
         self.reload()
 
     def execute(self):
@@ -406,9 +399,7 @@ class CancelOrder(QWidget, Command, metaclass=M_GUI_Model):
     def __init__(self, parent=None):
         super(CancelOrder, self).__init__(parent)
 
-        self.__name = QLineEdit()
-        self.__price = QLineEdit()
-        self.__add_button = QPushButton()
+        self.__canel_button = QPushButton()
         self.__exit_button = QPushButton()
         self.__list_widget = QListWidget()
 
@@ -418,54 +409,37 @@ class CancelOrder(QWidget, Command, metaclass=M_GUI_Model):
     def start(self):
         self.setWindowTitle('Cancel an order')
 
-        self.__add_button.setText('Add')
-        self.__add_button.clicked.connect(self.add)
-        self.__add_button.setMinimumWidth(100)
+        self.__canel_button.setText('Cancel')
+        self.__canel_button.clicked.connect(self.cancel)
+        self.__canel_button.setMinimumWidth(100)
         self.__exit_button.setText('Close')
         self.__exit_button.clicked.connect(self.close)
         self.__exit_button.setMinimumWidth(100)
 
-        buttons = QHBoxLayout()
-        buttons.addWidget(self.__add_button)
-        buttons.addItem(QSpacerItem(10, 0))
+        buttons = QVBoxLayout()
+        buttons.setSpacing(5)
+        buttons.addWidget(self.__canel_button)
         buttons.addWidget(self.__exit_button)
 
-        text_fields = QFormLayout()
-        text_fields.addItem(QSpacerItem(0, 30))
-        text_fields.addRow('Name: ', self.__name)
-        text_fields.addItem(QSpacerItem(0, 30))
-        text_fields.addRow('Price: ', self.__price)
-
-        left_column = QVBoxLayout()
-        left_column.addItem(text_fields)
-        left_column.addItem(buttons)
-
-        right_column = QVBoxLayout()
-        right_column.addWidget(QLabel('Current menu:'))
-        right_column.addItem(QSpacerItem(0, 5))
-        right_column.addWidget(self.__list_widget)
-
-        layout = QHBoxLayout()
-        layout.addItem(left_column)
-        layout.addSpacing(30)
-        layout.addItem(right_column)
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel('Orders:'))
+        layout.addWidget(self.__list_widget)
+        layout.addItem(buttons)
 
         self.setLayout(layout)
 
     def reload(self):
         self.__list_widget.clear()
-        for item in self._storage.get_menu():
+        for item in self._storage.get_orders():
             row = QListWidgetItem()
-            row.setText('{0:20}{1:5}'.format(str(item), item.get_price()))
+            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
             self.__list_widget.addItem(row)
 
-    def add(self):
-        name = self.__name.text()
-        price = self.__price.text()
-        # validation
-        self.__name.setText('')
-        self.__price.setText('')
-        self._storage.add_to_menu(Product(name, price))
+    def cancel(self):
+        number = self.__list_widget.currentRow()
+        if number == -1:
+            return
+        self._storage.cancel_order(self._storage.get_orders()[number])
         self.reload()
 
     def execute(self):

@@ -90,6 +90,74 @@ class EnlargeDecorator(Decorator):
         return "Enlarged " + super(EnlargeDecorator, self).__str__()
 
 
+class State(ABC):
+
+    @abstractmethod
+    def __init__(self):
+        super(State, self).__init__()
+        self._description = None
+    
+    @abstractmethod
+    def cancel(self, context):
+        pass
+
+    @abstractmethod
+    def next_state(self, context):
+        pass
+
+    @abstractmethod
+    def previous_state(self, context):
+        pass
+
+    def __str__(self):
+        return self._description
+
+class StatePending(State):
+
+    def __init__(self):
+        super(StatePending, self).__init__()
+        self._description = 'Pending'
+
+    def cancel(self, context):
+        pass
+
+    def next_state(self, context):
+        context.set_state(StateBeingPrepared())
+
+    def previous_state(self, context):
+        pass
+
+
+class StateBeingPrepared(State):
+    def __init__(self):
+        super(StateBeingPrepared, self).__init__()
+        self._description = 'Being prepared'
+
+    def cancel(self, context):
+        pass
+
+    def next_state(self, context):
+        context.set_state(StateDone())
+
+    def previous_state(self, context):
+        context.set_state(StatePending())
+        
+
+class StateDone(State):
+    def __init__(self):
+        super(StateDone, self).__init__()
+        self._description = 'Ready to collect'
+
+    def cancel(self, context):
+        pass
+
+    def next_state(self, context):
+        pass
+
+    def previous_state(self, context):
+        context.set_state(StateBeingPrepared())
+
+
 class Order(ABC):
     """docstring for Order."""
 
@@ -99,7 +167,7 @@ class Order(ABC):
         self._product_list = product_list
         self._id = Storage().get_number()
         self._price_total = 0
-        # self._state = StatePending()
+        self._state = StatePending()
         self._strategy = strategy
 
     def __str__(self):
@@ -119,6 +187,22 @@ class Order(ABC):
 
     def get_total(self):
         return self._price_total
+
+    def get_state(self):
+        return self._state
+
+    def set_state(self, state: State):
+        self._state = state
+
+    def next_state(self):
+        self._state.next_state(self)
+
+    def previous_state(self):
+        self._state.previous_state(self)
+
+    def cancel(self):
+        self._state.cancel(self)
+
 
 
 class OrderRegular(Order):
@@ -279,12 +363,25 @@ class Storage(object):
                 self.__order_list.remove(order)
                 self.notify_all()
                 self.serialize()
+                order.cancel()
 
         def get_menu(self):
             return self.__menu
 
         def get_orders(self):
             return self.__order_list
+
+        def next_state(self, order: Order):
+            if order in self.__order_list:
+                order.next_state()
+                self.notify_all()
+                self.serialize()
+
+        def previous_state(self, order: Order):
+            if order in self.__order_list:
+                order.previous_state()
+                self.notify_all()
+                self.serialize()
 
         def serialize(self):
             data = (self.__current_number, self.__menu, self.__order_list)
