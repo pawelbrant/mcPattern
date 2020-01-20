@@ -13,7 +13,7 @@ if __name__ == '__main__':
     monitor1.show()
 
     monitor2 = RegisterMonitor()
-    monitor2.move(890, 200)
+    monitor2.move(845, 200)
     monitor2.show()
 
     window = ControlPanel()

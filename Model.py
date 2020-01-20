@@ -35,6 +35,61 @@ class Product(IProduct):
         return self.__name
 
 
+class Decorator(IProduct):
+
+    @abstractmethod
+    def __init__(self, decorated: IProduct):
+        super(Decorator, self).__init__()
+        self._decorated = decorated
+
+    @abstractmethod
+    def get_price(self):
+        return self._decorated.get_price()
+
+    def get_decorated(self):
+        return self._decorated
+
+    @abstractmethod
+    def __str__(self):
+        return str(self._decorated)
+
+
+class KetchupDecorator(Decorator):
+
+    def __init__(self, product: IProduct):
+        super(KetchupDecorator, self).__init__(product)
+
+    def get_price(self):
+        return super(KetchupDecorator, self).get_price() + 2.00
+
+    def __str__(self):
+        return super(KetchupDecorator, self).__str__() + " with ketchup"
+
+
+class BoxDecorator(Decorator):
+
+    def __init__(self, product: IProduct):
+        super(BoxDecorator, self).__init__(product)
+
+    def get_price(self):
+        return super(BoxDecorator, self).get_price() + 0.50
+
+    def __str__(self):
+        return super(BoxDecorator, self).__str__() + " in a box"
+
+
+class EnlargeDecorator(Decorator):
+
+    def __init__(self, product: IProduct):
+        super(EnlargeDecorator, self).__init__(product)
+
+    def get_price(self):
+        return super(EnlargeDecorator, self).get_price() + 3.00
+
+    def __str__(self):
+        return "Enlarged " + super(EnlargeDecorator, self).__str__()
+
+
 class Order(ABC):
     """docstring for Order."""
 
@@ -88,12 +143,20 @@ class OrderBuilder(ABC):
         super(OrderBuilder, self).__init__()
         self._product_list = []
 
-    @abstractmethod
     def add_product(self, product):
-        pass
+        self._product_list.append(product)
+        return self
 
+    def get_products(self):
+        return self._product_list
+
+    def remove_product(self, product):
+        if product in self._product_list:
+            self._product_list.remove(product)
+
+    @abstractmethod
     def build(self):
-        return OrderRegular(self._product_list, self._get_strategy())
+        pass
 
     def _get_strategy(self):
         if len(self._product_list) > 9:
@@ -112,8 +175,11 @@ class OrderBuilderRegular(OrderBuilder):
         super(OrderBuilderRegular, self).__init__()
 
     def add_product(self, product):
-        self._product_list.append(product)
+        super(OrderBuilderRegular, self).add_product(product)
         return self
+
+    def build(self):
+        return OrderRegular(self._product_list, self._get_strategy())
 
 
 class OrderBuilderTakeaway(OrderBuilder):
@@ -123,8 +189,11 @@ class OrderBuilderTakeaway(OrderBuilder):
         super(OrderBuilderTakeaway, self).__init__()
 
     def add_product(self, product):
-        self._product_list.append(product)
+        super(OrderBuilderTakeaway, self).add_product(BoxDecorator(product))
         return self
+
+    def build(self):
+        return OrderTakeaway(self._product_list, self._get_strategy())
 
 
 class Observer(ABC):
@@ -187,12 +256,14 @@ class Storage(object):
             if product in self.__menu:
                 return
             self.__menu.append(product)
-            self.notify_all()
+            # self.notify_all()
+            self.serialize()
 
         def remove_from_menu(self, product: Product):
             if product in self.__menu:
                 self.__menu.remove(product)
-                self.notify_all()
+                # self.notify_all()
+                self.serialize()
 
         def add_order(self, order: Order):
             self.__order_list.append(order)
@@ -207,6 +278,7 @@ class Storage(object):
             if order in self.__order_list:
                 self.__order_list.remove(order)
                 self.notify_all()
+                self.serialize()
 
         def get_menu(self):
             return self.__menu
@@ -230,3 +302,14 @@ class Storage(object):
 
     def __getattribute__(self, attr):
         return getattr(Storage.__instance, attr)
+
+class Command(ABC):
+
+    @abstractmethod
+    def __init__(self):
+        super(Command, self).__init__()
+        self._storage = Storage()
+
+    @abstractmethod
+    def execute(self):
+        pass
