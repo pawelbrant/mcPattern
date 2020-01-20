@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from Strategy import StrategyRegularPrice, StrategySmallPromotion, StrategyBigPromotion
 
+
 class IProduct(ABC):
     """docstring for IProduct."""
 
@@ -64,11 +65,13 @@ class Order(ABC):
     def get_total(self):
         return self._price_total
 
+
 class OrderRegular(Order):
     """docstring for OrderRegular."""
 
     def __init__(self, product_list, strategy):
         super(OrderRegular, self).__init__(product_list, strategy)
+
 
 class OrderTakeaway(Order):
     """docstring for OrderRegular."""
@@ -101,6 +104,7 @@ class OrderBuilder(ABC):
             strategy = StrategyRegularPrice()
         return strategy
 
+
 class OrderBuilderRegular(OrderBuilder):
     """docstring for OrderBuilderTakeaway."""
 
@@ -122,6 +126,7 @@ class OrderBuilderTakeaway(OrderBuilder):
         self._product_list.append(product)
         return self
 
+
 class Observer(ABC):
 
     @abstractmethod
@@ -133,6 +138,7 @@ class Observer(ABC):
     
     def invalidate(self):
         self._order_list = self._storage.get_orders()
+
 
 class Observable(ABC):
 
@@ -157,6 +163,7 @@ class Observable(ABC):
     def notify_all(self):
         [x.invalidate() for x in self._observer_list]
 
+
 class Storage(object):
     
     class __Storage(Observable):
@@ -166,7 +173,6 @@ class Storage(object):
             try:
                 with open('backup.json', 'r') as f:
                     data = jsonpickle.decode(f.read())
-                print(data)
                 (self.__current_number, self.__menu, self.__order_list) = data
             except:
                 print('Could not load data')
@@ -224,13 +230,3 @@ class Storage(object):
 
     def __getattribute__(self, attr):
         return getattr(Storage.__instance, attr)
-
-class StaffObserver(Observer):
-    
-    def __init__(self):
-        super(StaffObserver, self).__init__()
-
-class RegisterObserver(Observer):
-    
-    def __init__(self):
-        super(RegisterObserver, self).__init__()
