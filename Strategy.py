@@ -24,7 +24,7 @@ class StrategyRegularPrice(IStrategy):
         total = round(total, 2)
         return total
 
-class StrategySmallPromotion(object):
+class StrategySmallPromotion(IStrategy):
     """docstring for StrategySmallPromotion."""
 
     def __init__(self):
@@ -44,7 +44,7 @@ class StrategySmallPromotion(object):
         return total
 
 
-class StrategyBigPromotion(object):
+class StrategyBigPromotion(IStrategy):
     """docstring for StrategySmallPromotion."""
 
     def __init__(self):
