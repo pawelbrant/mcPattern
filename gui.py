@@ -297,7 +297,7 @@ class ComposeOrder(QWidget, Command, metaclass=M_GUI_Model):
             row = QListWidgetItem()
             row.setText('{0:<10}{1:20}'.format(item.get_price(), str(item)))
             self.__menu_widget.addItem(row)
-        self.__label_total.setText('Sum = ' + str(total))
+        self.__label_total.setText('Sum = ' + str(round(total, 2)))
 
     def add(self):
         number = self.__menu_widget.currentRow()
