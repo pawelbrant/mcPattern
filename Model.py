@@ -1,6 +1,8 @@
 import jsonpickle
 from abc import ABC, abstractmethod
 
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
+
 from Strategy import StrategyRegularPrice, StrategySmallPromotion, StrategyBigPromotion
 
 
@@ -96,7 +98,7 @@ class State(ABC):
     def __init__(self):
         super(State, self).__init__()
         self._description = None
-    
+
     @abstractmethod
     def cancel(self, context):
         pass
@@ -111,6 +113,7 @@ class State(ABC):
 
     def __str__(self):
         return self._description
+
 
 class StatePending(State):
 
@@ -132,16 +135,17 @@ class StateBeingPrepared(State):
     def __init__(self):
         super(StateBeingPrepared, self).__init__()
         self._description = 'Being prepared'
+        self.msg = None
 
     def cancel(self, context):
-        pass
+        return 'Please inform the cook about the change.'
 
     def next_state(self, context):
         context.set_state(StateDone())
 
     def previous_state(self, context):
         context.set_state(StatePending())
-        
+
 
 class StateDone(State):
     def __init__(self):
@@ -149,10 +153,10 @@ class StateDone(State):
         self._description = 'Ready to collect'
 
     def cancel(self, context):
-        pass
+        return 'The stuff will have something to eat today!'
 
     def next_state(self, context):
-        pass
+        Storage().order_received(context)
 
     def previous_state(self, context):
         context.set_state(StateBeingPrepared())
@@ -174,9 +178,7 @@ class Order(ABC):
         string = 'Order #{:0>2}: '.format(self._id)
         for product in self._product_list:
             string += ' {}'.format(product)
-        if self._price_total == 0:
-            self._price_total = self._strategy.calculate(self._product_list)
-        string += '; Total price: {}'.format(self._price_total)
+        string += '; Total price: {}'.format(self.get_total())
         return string
 
     def get_number(self):
@@ -186,6 +188,8 @@ class Order(ABC):
         return self._product_list
 
     def get_total(self):
+        if self._price_total == 0:
+            self._price_total = self._strategy.calculate(self._product_list)
         return self._price_total
 
     def get_state(self):
@@ -201,8 +205,11 @@ class Order(ABC):
         self._state.previous_state(self)
 
     def cancel(self):
-        self._state.cancel(self)
+        return self._state.cancel(self)
 
+    @abstractmethod
+    def get_type(self):
+        pass
 
 
 class OrderRegular(Order):
@@ -211,12 +218,18 @@ class OrderRegular(Order):
     def __init__(self, product_list, strategy):
         super(OrderRegular, self).__init__(product_list, strategy)
 
+    def get_type(self):
+        return 'R'
+
 
 class OrderTakeaway(Order):
     """docstring for OrderRegular."""
 
     def __init__(self, product_list, strategy):
         super(OrderTakeaway, self).__init__(product_list, strategy)
+
+    def get_type(self):
+        return 'T'
 
 
 class OrderBuilder(ABC):
@@ -288,7 +301,7 @@ class Observer(ABC):
         self._storage = Storage()
         self._storage.add_observer(self)
         self._order_list = self._storage.get_orders()
-    
+
     def invalidate(self):
         self._order_list = self._storage.get_orders()
 
@@ -312,13 +325,13 @@ class Observable(ABC):
     def notify(self, observer: Observer):
         if observer in self._observer_list:
             observer.invalidate()
-    
+
     def notify_all(self):
         [x.invalidate() for x in self._observer_list]
 
 
 class Storage(object):
-    
+
     class __Storage(Observable):
 
         def __init__(self):
@@ -346,7 +359,6 @@ class Storage(object):
         def remove_from_menu(self, product: Product):
             if product in self.__menu:
                 self.__menu.remove(product)
-                # self.notify_all()
                 self.serialize()
 
         def add_order(self, order: Order):
@@ -356,14 +368,17 @@ class Storage(object):
             self.serialize()
 
         def order_received(self, order: Order):
-            self.notify_all()
+            if order in self.__order_list:
+                self.__order_list.remove(order)
+                self.notify_all()
+                self.serialize()
 
         def cancel_order(self, order: Order):
             if order in self.__order_list:
                 self.__order_list.remove(order)
                 self.notify_all()
                 self.serialize()
-                order.cancel()
+                return order.cancel()
 
         def get_menu(self):
             return self.__menu
@@ -399,6 +414,7 @@ class Storage(object):
 
     def __getattribute__(self, attr):
         return getattr(Storage.__instance, attr)
+
 
 class Command(ABC):
 

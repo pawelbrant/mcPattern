@@ -1,14 +1,14 @@
-#GUI imports
-from PyQt5.QtWidgets import QWidget, QListWidget, QFormLayout, QHBoxLayout, \
-QLabel, QSpinBox, QDoubleSpinBox, QLineEdit, QTextEdit, QPushButton, \
-QVBoxLayout, QListWidgetItem, QSpacerItem, QCheckBox, QStackedLayout, QGridLayout
+# GUI imports
+from PyQt5.QtWidgets import QWidget, QListWidget, QFormLayout, QHBoxLayout, QVBoxLayout, \
+    QLabel, QLineEdit, QPushButton, QListWidgetItem, QSpacerItem, QCheckBox, QStackedLayout, QGridLayout
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtCore import Qt
 
 from sip import wrappertype as M_A
 from abc import ABCMeta as M_B
 
-from Model import *
+from Model import Observer, Command, Product, OrderBuilderRegular, OrderBuilderTakeaway, KetchupDecorator, \
+    EnlargeDecorator, BoxDecorator
 
 
 class ControlPanel(QWidget):
@@ -16,7 +16,6 @@ class ControlPanel(QWidget):
 
     def __init__(self, parent=None):
         super(ControlPanel, self).__init__(parent)
-        # self.facade = facade
 
         self.__add_order = QPushButton()
         self.__change_order_state = QPushButton()
@@ -69,7 +68,7 @@ class ControlPanel(QWidget):
     def remove_product(self):
         self.__child = RemoveFromMenu()
         self.__child.execute()
-        
+
 
 class M_GUI_Model(M_A, M_B):
     pass
@@ -78,13 +77,13 @@ class M_GUI_Model(M_A, M_B):
 class StaffMonitor(QWidget, Observer, metaclass=M_GUI_Model):
 
     def __init__(self, parent=None):
-        super(StaffMonitor, self).__init__(parent)    
+        super(StaffMonitor, self).__init__(parent)
         self.__orders = QListWidget()
         self.__details = QListWidget()
 
         self.start()
         self.reload()
-        
+
     def start(self):
         self.setWindowTitle('Staff Observer')
 
@@ -111,7 +110,8 @@ class StaffMonitor(QWidget, Observer, metaclass=M_GUI_Model):
         self.__orders.clear()
         for item in self._order_list:
             row = QListWidgetItem()
-            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
+            row.setText('#{0:0>2}     {1}  {2:>8}{3:12}{4}'.format(
+                item.get_number(), item.get_type(), str(item.get_total()), '', str(item.get_state())))
             self.__orders.addItem(row)
 
     def details(self):
@@ -143,7 +143,6 @@ class RegisterMonitor(QWidget, Observer, metaclass=M_GUI_Model):
         self.__orders.setMaximumHeight(130)
         layout = QVBoxLayout()
         layout.addWidget(QLabel('Orders:'))
-        # layout.addItem(QSpacerItem(0, 5))
         layout.addWidget(self.__orders)
 
         self.setLayout(layout)
@@ -152,7 +151,8 @@ class RegisterMonitor(QWidget, Observer, metaclass=M_GUI_Model):
         self.__orders.clear()
         for item in self._order_list:
             row = QListWidgetItem()
-            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
+            row.setText('#{0:0>2}     {1}{2:25}{3}'.format(
+                item.get_number(), item.get_type(), '', str(item.get_state())))
             row.setFlags(row.flags() & ~Qt.ItemIsSelectable)
             self.__orders.addItem(row)
 
@@ -177,6 +177,7 @@ class ComposeOrder(QWidget, Command, metaclass=M_GUI_Model):
         self.__products_widget = QListWidget()
         self.__label_1 = QLabel('Order contents:')
         self.__label_2 = QLabel('Current menu:')
+        self.__label_total = QLabel()
 
         self.__main = QWidget()
         self.__helper = QWidget()
@@ -238,6 +239,8 @@ class ComposeOrder(QWidget, Command, metaclass=M_GUI_Model):
 
         buttons = QVBoxLayout()
         buttons.addItem(QSpacerItem(0, 20))
+        buttons.addWidget(self.__label_total)
+        buttons.addItem(QSpacerItem(0, 10))
         buttons.addWidget(self.__ketchup)
         buttons.addItem(QSpacerItem(0, 10))
         buttons.addWidget(self.__enlarged)
@@ -255,9 +258,6 @@ class ComposeOrder(QWidget, Command, metaclass=M_GUI_Model):
         left_column.addItem(QSpacerItem(0, 5))
         left_column.addWidget(self.__products_widget)
 
-        middle_column = QVBoxLayout()
-        middle_column.addItem(buttons)
-
         right_column = QVBoxLayout()
         right_column.addWidget(self.__label_2)
         right_column.addItem(QSpacerItem(0, 5))
@@ -266,12 +266,11 @@ class ComposeOrder(QWidget, Command, metaclass=M_GUI_Model):
         layout = QHBoxLayout()
         layout.addItem(left_column)
         layout.addSpacing(30)
-        layout.addItem(middle_column)
+        layout.addItem(buttons)
         layout.addSpacing(30)
         layout.addItem(right_column)
 
         self.__main.setLayout(layout)
-
 
     def start(self):
         self.setWindowTitle('Regular or Takeaway')
@@ -288,14 +287,17 @@ class ComposeOrder(QWidget, Command, metaclass=M_GUI_Model):
     def reload(self):
         self.__products_widget.clear()
         self.__menu_widget.clear()
+        total = 0
         for item in self.__builder.get_products():
             row = QListWidgetItem()
-            row.setText('{0:20}{1:5}'.format(str(item), item.get_price()))
+            row.setText('{0:<10}{1:20}'.format(item.get_price(), str(item)))
             self.__products_widget.addItem(row)
+            total += item.get_price()
         for item in self._storage.get_menu():
             row = QListWidgetItem()
-            row.setText('{0:20}{1:5}'.format(str(item), item.get_price()))
+            row.setText('{0:<10}{1:20}'.format(item.get_price(), str(item)))
             self.__menu_widget.addItem(row)
+        self.__label_total.setText('Sum = ' + str(total))
 
     def add(self):
         number = self.__menu_widget.currentRow()
@@ -372,7 +374,8 @@ class ChangeOrderState(QWidget, Command, metaclass=M_GUI_Model):
         self.__list_widget.clear()
         for item in self._storage.get_orders():
             row = QListWidgetItem()
-            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
+            row.setText('#{0:0>2}     {1}{2:25}{3}'.format(
+                item.get_number(), item.get_type(), '', str(item.get_state())))
             self.__list_widget.addItem(row)
 
     def next(self):
@@ -432,21 +435,35 @@ class CancelOrder(QWidget, Command, metaclass=M_GUI_Model):
         self.__list_widget.clear()
         for item in self._storage.get_orders():
             row = QListWidgetItem()
-            row.setText('#{0:0>2}{1:35}{2}'.format(item.get_number(), '', str(item.get_state())))
+            row.setText('#{0:0>2}     {1}{2:25}{3}'.format(
+                item.get_number(), item.get_type(), '', str(item.get_state())))
             self.__list_widget.addItem(row)
 
     def cancel(self):
         number = self.__list_widget.currentRow()
         if number == -1:
             return
-        self._storage.cancel_order(self._storage.get_orders()[number])
+        text = self._storage.cancel_order(
+            self._storage.get_orders()[number])
+        if text != None:
+            self.__msg = QWidget()
+            self.__msg.setWindowTitle('Message')
+            layout = QVBoxLayout()
+            layout.addWidget(QLabel(text))
+            button = QPushButton()
+            button.setText('Close')
+            button.clicked.connect(self.__msg.close)
+            layout.addWidget(button)
+            self.__msg.setLayout(layout)
+            self.__msg.show()
+            self.__msg.move(600, 350)
         self.reload()
 
     def execute(self):
         self.move(600, 430)
         self.show()
 
-        
+
 class AddToMenu(QWidget, Command, metaclass=M_GUI_Model):
 
     def __init__(self, parent=None):
@@ -457,6 +474,9 @@ class AddToMenu(QWidget, Command, metaclass=M_GUI_Model):
         self.__add_button = QPushButton()
         self.__exit_button = QPushButton()
         self.__list_widget = QListWidget()
+        self.__validator = QDoubleValidator(0, 999, 2)
+
+        self.__price.setValidator(self.__validator)
 
         self.start()
         self.reload()
@@ -502,16 +522,17 @@ class AddToMenu(QWidget, Command, metaclass=M_GUI_Model):
         self.__list_widget.clear()
         for item in self._storage.get_menu():
             row = QListWidgetItem()
-            row.setText('{0:20}{1:5}'.format(str(item), item.get_price()))
+            row.setText('{0:<10}{1:20}'.format(item.get_price(), str(item)))
             row.setFlags(row.flags() & ~Qt.ItemIsSelectable)
             self.__list_widget.addItem(row)
 
     def add(self):
         name = self.__name.text()
         price = self.__price.text()
-        price = price.replace(',','.')
+        price = price.replace(',', '.')
         price = float(price)
-        # validation
+        if not name:
+            return
         self.__name.setText('')
         self.__price.setText('')
         self._storage.add_to_menu(Product(name, price))
@@ -561,7 +582,7 @@ class RemoveFromMenu(QWidget, Command, metaclass=M_GUI_Model):
         self.__list_widget.clear()
         for item in self._storage.get_menu():
             row = QListWidgetItem()
-            row.setText('{0:20}{1:5}'.format(str(item), item.get_price()))
+            row.setText('{0:<10}{1:20}'.format(item.get_price(), str(item)))
             self.__list_widget.addItem(row)
 
     def remove(self):
