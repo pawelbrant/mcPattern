@@ -1,24 +1,23 @@
 import sys
 
-# from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QApplication
 
-# from gui import ControlPanel
-from Model import Product, OrderRegular, OrderTakeaway, OrderBuilderRegular, \
-OrderBuilderTakeaway
-
+from gui import ControlPanel, StaffMonitor, RegisterMonitor
 
 
 if __name__ == '__main__':
-    # app = QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
-    var1 = OrderBuilderRegular()
-    print(var1)
-    # var2 = OrderTakeaway([], 1)
-    # print(var2)
+    monitor1 = StaffMonitor()
+    monitor1.move(0, 200)
+    monitor1.show()
 
-    var1.add_product(Product('Mc Mini', 14.99))
-    var1.add_product(Product('Mc Big', 20.99))
-    order = var1.build()
-    print(order)
+    monitor2 = RegisterMonitor()
+    monitor2.move(845, 200)
+    monitor2.show()
 
-    # sys.exit(app.exec_())
+    window = ControlPanel()
+    window.move(600, 200)
+    window.show()
+
+    sys.exit(app.exec_())
